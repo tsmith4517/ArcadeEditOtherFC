@@ -1,0 +1,40 @@
+//The attribute rule is added to the pointClass on the Field field executed on delete
+
+//get the guid of the point feature being updated
+var globalId = $feature.globalid
+
+//find the buffered geometry feature
+var fs = FeatureSetbyName($datastore, "BufferClass")
+//by filtering on the pointGuid
+var bf = filter(fs, "TestPtGUID = @globalId")
+//if we couldn't find it exit (someone might've deleted it)
+if (count(bf) == 0) return $feature.BufferSize;
+//get the feature row (we should only have one )
+var buffered_feature = first(bf)
+
+
+return { 
+       //we want to just return the value of field `Field` no change require
+      "result": $feature.BufferSize,
+       //this keyword indicates an edit that need to happen, its an array since we can make many edits
+       "edit": [
+           {  
+              //the other class we want to edit
+               "className" : "BufferClass",
+               //the type of edit, in this case we want to delete so we say `deletes`, its an array since we can make many deletes
+               "deletes" : [
+                      {
+                            //what feature we need to delete? 
+                            "globalID" : buffered_feature.globalId 
+                      }
+
+             ]
+
+
+            }
+      
+        
+
+     ]
+
+}
