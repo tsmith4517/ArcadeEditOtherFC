@@ -1,0 +1,54 @@
+//The attribute rule is added to the pointClass on the Field field on update
+//Check if the Buffer Size Field has changed or the Pt Geometry. 
+//If the Point Geometry or BufferSize is unchanged Changes will be made
+var geometry_is_unchanged = Equals(Geometry($feature), Geometry($originalfeature));
+var buffersize_is_unchanged = Equals($feature.BufferSize, $originalfeature.BufferSize);
+if (geometry_is_unchanged && buffersize_is_unchanged){
+    return
+}
+
+var buffer_size = IIF(isEmpty($feature.BufferSize), 0, $feature.BufferSize);
+//buffer the point feature 40 feet, this will give us a circle polygon geometry 
+var buffered_geom = buffer($feature, buffer_size)
+
+//get the guid of the point feature being updated
+var globalId = $feature.globalid
+
+//find the buffered geometry feature
+var buffer_fs = FeatureSetbyName($datastore, "BufferClass")
+//by filtering on the pointGuid
+var bf = filter(buffer_fs, "TestPtGUID = @globalId")
+//if we couldn't find it exit (someone might've deleted it)
+if (count(bf) == 0) return $feature.BufferSize;
+//get the feature row (we should only have one )
+var buffered_feature = first(bf)
+
+return {
+      //we want to just return the value of field `Field` no change require
+      "result": $feature.BufferSize,
+      //this keyword indicates an edit that need to happen, its an array since we can make many edits
+       "edit": [
+           {  
+              //the other class we want to edit
+               "className" : "BufferClass",
+               //the type of edit, in this case we want to update so we say `updates`, its an array since we can make many updates
+               "updates" : [
+                      { 
+                            //what feature we need to update? we can either find it by the globalid or the objectId
+                            "globalID" : buffered_feature.globalId,
+                            //what do we want to update (we can optionally add attributes property and update properties there)
+                            "geometry": buffered_geom,
+                            //Updates the Buffer Size
+                            "attributes":{
+                                "BufferSize":buffer_size
+                            }
+                                
+                     }
+
+             ]
+
+
+            }    
+     ]
+
+}
