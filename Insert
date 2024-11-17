@@ -1,0 +1,43 @@
+//The attribute rule is added to the pointClass on the Field field on insert
+
+//Input Parameters
+// User Sets the Initial Buffer Size
+var buffer_size = 50000
+
+//buffer the point feature 40 feet, this will give us a circle polygon geometry 
+var buffered_geom = buffer($feature,buffer_size);
+
+
+return {
+       //we want to just return the value of field `Field` no change require
+      "result": buffer_size,
+       //this keyword indicates an edit that need to happen, its an array since we can make many edits
+       "edit": [  
+           {  
+               //the other class we want to edit
+               "className" : "BufferClass", 
+               //the type of edit, in this case we want to add so we say `adds`, its an array since we can make many inserts
+               "adds" : [
+                       
+                      {
+                            //the attribute of the feature we want to add, 
+                            // we only want to populate the pointGuid with the globalId of the feature being created
+                            "attributes":  
+                             {
+                                   "TestPtGUID": $feature.globalid,
+                                   "BufferSize":buffer_size
+
+                               }, 
+                            //we want to use the buffered geometry to insert the polygon
+                            "geometry": buffered_geom
+
+                      }
+
+             ]
+
+
+            }
+      
+     ]
+
+}
